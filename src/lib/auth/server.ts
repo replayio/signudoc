@@ -16,7 +16,10 @@ import {
   type TransactionalEmailMessage,
 } from "../services/email.ts";
 import { withUserEmailLegalFooter } from "../services/email-legal-footer.ts";
-import { consumeRateLimit } from "../security/rate-limit.ts";
+import {
+  consumeRateLimit,
+  resolveRateLimitScale,
+} from "../security/rate-limit.ts";
 import { getClientIpHeaderNames } from "../security/request.ts";
 import {
   requireConfigValue,
@@ -391,7 +394,8 @@ export function createAppAuth({
         consume: async (key, rule) => {
           const decision = await consumeRateLimit({
             key: `auth:${key}`,
-            limit: rule.max,
+            // Scaled like the app's own limits (RATE_LIMIT_SCALE).
+            limit: Math.ceil(rule.max * resolveRateLimitScale()),
             windowMs: rule.window * 1000,
           });
 
