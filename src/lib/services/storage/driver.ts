@@ -3,7 +3,7 @@ import { type EnvSource } from "../../utils/env.ts";
 // Which storage the app uses. Kept free of the drivers themselves so the
 // request proxy can ask without loading them.
 
-export type StorageDriver = "blob" | "local" | "s3";
+export type StorageDriver = "blob" | "local" | "netlify" | "s3";
 
 /** True when a Vercel Blob store is connected to the project. */
 export function hasBlobCredentials(env: EnvSource = process.env): boolean {
@@ -19,6 +19,8 @@ export function hasBlobCredentials(env: EnvSource = process.env): boolean {
  * - "local": files on this machine's disk. The default everywhere else.
  * - "s3": a bucket in an S3-compatible store such as Cloudflare R2. Only
  *   when STORAGE_DRIVER asks for it.
+ * - "netlify": Netlify Blobs. Chosen automatically on Netlify, where there
+ *   is no disk to keep files on.
  *
  * STORAGE_DRIVER overrides the choice.
  */
@@ -30,6 +32,7 @@ export function resolveStorageDriver(
   if (
     configuredDriver === "blob" ||
     configuredDriver === "local" ||
+    configuredDriver === "netlify" ||
     configuredDriver === "s3"
   ) {
     return configuredDriver;
@@ -37,11 +40,15 @@ export function resolveStorageDriver(
 
   if (configuredDriver) {
     throw new Error(
-      `Unknown STORAGE_DRIVER "${configuredDriver}". Use "blob", "local" or "s3", or leave it unset.`,
+      `Unknown STORAGE_DRIVER "${configuredDriver}". Use "blob", "local", "netlify" or "s3", or leave it unset.`,
     );
   }
 
-  return hasBlobCredentials(env) || env.VERCEL === "1" ? "blob" : "local";
+  if (hasBlobCredentials(env) || env.VERCEL === "1") {
+    return "blob";
+  }
+
+  return env.NETLIFY === "true" ? "netlify" : "local";
 }
 
 /**
