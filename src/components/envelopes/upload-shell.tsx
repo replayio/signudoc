@@ -29,8 +29,7 @@ import { type CreateEnvelopeResponse } from "@/lib/schemas/envelope";
 const envelopeSteps = ["Upload", "Signers", "Place fields", "Review"];
 const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
-type UploadErrorCode =
-  "encrypted" | "invalid-type" | "preview-unavailable" | "too-large";
+type UploadErrorCode = "invalid-type" | "preview-unavailable" | "too-large";
 
 type UploadSummary = {
   file: File;
@@ -39,8 +38,6 @@ type UploadSummary = {
 };
 
 const errorMessageMap: Record<UploadErrorCode, string> = {
-  encrypted:
-    "This PDF is password-protected or encrypted. Please upload an unlocked PDF.",
   "invalid-type": "Only PDF files are supported. Please upload a valid PDF.",
   "preview-unavailable":
     "We couldn't render this PDF in the editor. Please export it as a standard PDF and try again.",
@@ -81,34 +78,6 @@ function getTitleSuggestion(fileName: string): string {
   }
 
   return makeTitleSuggestion(fileName);
-}
-
-// The same check the server makes before it accepts a document, so the
-// sender hears about a locked PDF when they choose it, not after Next.
-function looksEncrypted(bytes: Uint8Array): boolean {
-  const prefix = new TextDecoder("latin1").decode(
-    bytes.subarray(0, Math.min(bytes.length, 512 * 1024)),
-  );
-
-  return prefix.includes("/Encrypt");
-}
-
-async function checkPdfReadable(file: File): Promise<UploadErrorCode | null> {
-  const bytes = new Uint8Array(await file.arrayBuffer());
-
-  if (looksEncrypted(bytes)) {
-    return "encrypted";
-  }
-
-  try {
-    await assertPdfPreviewRenderable(bytes);
-  } catch (error) {
-    return error instanceof Error && error.name === "PasswordException"
-      ? "encrypted"
-      : "preview-unavailable";
-  }
-
-  return null;
 }
 
 function isClientVisiblePdf(file: File): boolean {
@@ -369,9 +338,6 @@ export function UploadShell({ directUploadPrefix = null }: UploadShellProps) {
   // The first page of the chosen file as a small picture: shown beside the
   // file name here, then saved as the envelope's dashboard thumbnail.
   const thumbnailRef = useRef<Promise<Blob | null> | null>(null);
-  // The file being checked for readability; a later choice wins.
-  const checkingFileRef = useRef<File | null>(null);
-  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -404,8 +370,6 @@ export function UploadShell({ directUploadPrefix = null }: UploadShellProps) {
   }
 
   function resetSelection(clearTitle: boolean) {
-    checkingFileRef.current = null;
-    setIsChecking(false);
     startThumbnail(null);
     setSummary(null);
     setErrorMessage(null);
@@ -472,30 +436,6 @@ export function UploadShell({ directUploadPrefix = null }: UploadShellProps) {
       setTitle(titleSuggestion);
       setAutoFilledTitle(titleSuggestion);
     }
-
-    checkingFileRef.current = file;
-    setIsChecking(true);
-
-    void checkPdfReadable(file)
-      .catch((): UploadErrorCode => "preview-unavailable")
-      .then((problem) => {
-        if (checkingFileRef.current !== file) {
-          return;
-        }
-
-        checkingFileRef.current = null;
-        setIsChecking(false);
-
-        if (problem) {
-          startThumbnail(null);
-          setSummary(null);
-          setErrorMessage(errorMessageMap[problem]);
-          setTitle((currentTitle) =>
-            currentTitle === titleSuggestion ? "" : currentTitle,
-          );
-          setAutoFilledTitle(null);
-        }
-      });
   }
 
   function handleFileSelection(file: File | null) {
@@ -621,10 +561,7 @@ export function UploadShell({ directUploadPrefix = null }: UploadShellProps) {
   }
 
   const canContinue =
-    !isCreatingDraft &&
-    !isChecking &&
-    summary != null &&
-    title.trim().length > 0;
+    !isCreatingDraft && summary != null && title.trim().length > 0;
 
   return (
     <div

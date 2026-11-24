@@ -28,19 +28,11 @@ export async function GET(
 
   const session = sessionResult;
   const { id } = await context.params;
-  // The prepare page reads it inline; the detail page's "Download document"
-  // asks for a file.
-  const asAttachment =
-    new URL(request.url).searchParams.get("download") === "1";
 
   try {
-    const document = await getDraftEnvelopeDocumentForUser(
-      session.user.id,
-      id,
-      {
-        database: getDb(),
-      },
-    );
+    const document = await getDraftEnvelopeDocumentForUser(session.user.id, id, {
+      database: getDb(),
+    });
     const responseBody = document.body.slice().buffer as ArrayBuffer;
 
     return new Response(responseBody, {
@@ -48,7 +40,7 @@ export async function GET(
         "cache-control": "private, no-store",
         "content-disposition": buildContentDisposition(
           document.fileName,
-          asAttachment ? "attachment" : "inline",
+          "inline",
         ),
         "content-length": String(document.contentLength),
         "content-type": document.contentType,
