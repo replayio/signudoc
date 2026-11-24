@@ -172,6 +172,11 @@ test("Netlify Blobs driver takes its store name from the environment", async () 
 test("Netlify Blobs is chosen on Netlify unless something else is asked for", () => {
   assert.equal(resolveStorageDriver({ NETLIFY: "true" }), "netlify");
   assert.equal(resolveStorageDriver({ STORAGE_DRIVER: "netlify" }), "netlify");
+  // At run time Netlify's functions see the Blobs context, not NETLIFY.
+  assert.equal(
+    resolveStorageDriver({ NETLIFY_BLOBS_CONTEXT: "eyJ..." }),
+    "netlify",
+  );
   // PDFs go through the app, as with local storage.
   assert.equal(supportsDirectUploads({ NETLIFY: "true" }), false);
   // A connected Vercel Blob store, or Vercel itself, still wins.

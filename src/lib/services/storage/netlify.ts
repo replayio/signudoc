@@ -25,11 +25,6 @@ type CreateNetlifyStorageServiceOptions = {
   store?: Store;
 };
 
-/** True when the app is being built or run by Netlify. */
-export function isOnNetlify(env: EnvSource = process.env): boolean {
-  return env.NETLIFY === "true";
-}
-
 export function createNetlifyStorageService({
   env = process.env,
   store: providedStore,

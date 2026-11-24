@@ -5,6 +5,14 @@ import { type EnvSource } from "../../utils/env.ts";
 
 export type StorageDriver = "blob" | "local" | "netlify" | "s3";
 
+/**
+ * True when the app is being built or run by Netlify. NETLIFY is set during
+ * the build; at run time the functions see the Blobs context instead.
+ */
+export function isOnNetlify(env: EnvSource = process.env): boolean {
+  return env.NETLIFY === "true" || Boolean(env.NETLIFY_BLOBS_CONTEXT?.trim());
+}
+
 /** True when a Vercel Blob store is connected to the project. */
 export function hasBlobCredentials(env: EnvSource = process.env): boolean {
   return Boolean(
@@ -48,7 +56,7 @@ export function resolveStorageDriver(
     return "blob";
   }
 
-  return env.NETLIFY === "true" ? "netlify" : "local";
+  return isOnNetlify(env) ? "netlify" : "local";
 }
 
 /**
