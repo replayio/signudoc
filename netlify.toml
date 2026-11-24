@@ -3,12 +3,11 @@
 # somewhere else", for the settings it needs.
 #
 # The database is Netlify Database (Postgres from Neon), provisioned by the
-# @netlify/database package on the first deploy. Set DATABASE_URL on the
-# site to its NETLIFY_DATABASE_URL_UNPOOLED value; until it is set the
-# build skips the migration step.
+# @netlify/database package on the first deploy. It reaches the build and
+# the app as NETLIFY_DATABASE_URL, which db/database-url.mjs understands.
 
 [build]
-  command = "if [ -n \"$DATABASE_URL\" ]; then npm run db:migrate; fi && npm run build"
+  command = "npm run db:migrate && npm run build"
   publish = ".next"
 
 [build.environment]
