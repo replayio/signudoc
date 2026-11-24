@@ -34,3 +34,6 @@ playwright-report/
 
 # Local Netlify folder
 .netlify
+
+# Local QA admin credentials
+.replay-admin.local
