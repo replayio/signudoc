@@ -47,6 +47,21 @@ test("off Vercel, Vercel's header means nothing and the proxy headers are used",
   );
 });
 
+test("on Netlify, the address Netlify wrote wins over the forwarded chain", () => {
+  const netlify = { NETLIFY_BLOBS_CONTEXT: "eyJ..." };
+  const headers = new Headers({
+    "x-forwarded-for": "198.51.100.7, 10.0.0.1",
+    "x-nf-client-connection-ip": "203.0.113.5",
+  });
+
+  assert.equal(getClientIpAddress(headers, netlify), "203.0.113.5");
+  assert.equal(getClientIpHeaderNames(netlify)[0], "x-nf-client-connection-ip");
+  assert.equal(
+    getClientIpHeaderNames(elsewhere).includes("x-nf-client-connection-ip"),
+    false,
+  );
+});
+
 test("an empty header is passed over, and no header at all gives no address", () => {
   assert.equal(
     getClientIpAddress(

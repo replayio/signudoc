@@ -1,3 +1,5 @@
+import { isOnNetlify } from "../utils/env.ts";
+
 type IpEnv = Record<string, string | undefined>;
 
 function firstAddress(value: string | null): string | null {
@@ -11,13 +13,23 @@ function firstAddress(value: string | null): string | null {
  * itself and cannot be set by the visitor, so they come first.
  * https://vercel.com/docs/headers/request-headers
  *
- * Anywhere else those two names mean nothing special and anyone could send
+ * On Netlify, x-nf-client-connection-ip is written by Netlify itself and
+ * holds one address, where x-forwarded-for lists Netlify's own hop as well.
+ * https://docs.netlify.com/platform/primitives/#client-ip-address
+ *
+ * Anywhere else those names mean nothing special and anyone could send
  * them, so the usual proxy headers are used instead.
  */
 export function getClientIpHeaderNames(env: IpEnv = process.env): string[] {
-  return env.VERCEL === "1"
-    ? ["x-vercel-forwarded-for", "x-real-ip", "x-forwarded-for"]
-    : ["x-forwarded-for", "cf-connecting-ip", "x-real-ip"];
+  if (env.VERCEL === "1") {
+    return ["x-vercel-forwarded-for", "x-real-ip", "x-forwarded-for"];
+  }
+
+  if (isOnNetlify(env)) {
+    return ["x-nf-client-connection-ip", "x-forwarded-for", "x-real-ip"];
+  }
+
+  return ["x-forwarded-for", "cf-connecting-ip", "x-real-ip"];
 }
 
 export function getClientIpAddress(

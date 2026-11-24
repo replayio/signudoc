@@ -148,6 +148,14 @@ export function resolveAppUrl(
  * True when the app is served from this machine (localhost), which is how a
  * production build is run for local testing and the end-to-end test.
  */
+/**
+ * True when the app is being built or run by Netlify. NETLIFY is set during
+ * the build; at run time the functions see the Blobs context instead.
+ */
+export function isOnNetlify(env: EnvSource = process.env): boolean {
+  return env.NETLIFY === "true" || Boolean(env.NETLIFY_BLOBS_CONTEXT?.trim());
+}
+
 export function isLocalDeployment(env: EnvSource = process.env): boolean {
   const appUrl = resolveAppUrl(env);
 
