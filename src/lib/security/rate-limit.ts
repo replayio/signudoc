@@ -191,3 +191,16 @@ export function clearRateLimitStoreForTests() {
   globalThis.__signudocRateLimitSweepAt = undefined;
   globalThis.__signudocRateLimitWarnedAt = undefined;
 }
+
+/**
+ * RATE_LIMIT_SCALE multiplies every route limit. Unset or 1, the limits are
+ * as written. A test instance driven by many automated visitors behind one
+ * address and one account can set it higher; a production site should not.
+ */
+export function resolveRateLimitScale(
+  env: Readonly<Record<string, string | undefined>> = process.env,
+): number {
+  const scale = Number(env.RATE_LIMIT_SCALE?.trim() || "1");
+
+  return Number.isFinite(scale) && scale >= 1 ? scale : 1;
+}

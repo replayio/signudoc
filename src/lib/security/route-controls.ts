@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { logSecurityEvent } from "./logging.ts";
-import { consumeRateLimit } from "./rate-limit.ts";
+import { consumeRateLimit, resolveRateLimitScale } from "./rate-limit.ts";
 import { getClientIpAddress, getRequestPathname } from "./request.ts";
 
 type RateLimitInput = {
@@ -23,7 +23,7 @@ export async function applyRateLimit(
 ): Promise<NextResponse | null> {
   const decision = await consumeRateLimit({
     key: input.key,
-    limit: input.limit,
+    limit: Math.ceil(input.limit * resolveRateLimitScale()),
     windowMs: input.windowMs,
   });
 
