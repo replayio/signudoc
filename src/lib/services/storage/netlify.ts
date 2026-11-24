@@ -95,20 +95,18 @@ export function createNetlifyStorageService({
       };
     },
     async getObjectStream(key) {
-      const normalizedKey = normalizeStorageKey(key);
-      const found = await store().getWithMetadata(normalizedKey, {
-        type: "stream",
-      });
-
-      if (found === null || found.data === null) {
-        throw new StorageObjectNotFoundError(normalizedKey);
-      }
+      // Read whole, then stream from memory. Handing the store's own
+      // response body on as the app's response stalls on Netlify's
+      // functions until they time out, and nothing kept here is large:
+      // a PDF within the upload limit, or a thumbnail.
+      const object = await this.getObject(key);
 
       return {
         bucketName: storeName,
-        contentType: metadataOf(found.metadata).contentType,
-        key: normalizedKey,
-        stream: found.data as ReadableStream<Uint8Array>,
+        contentLength: object.contentLength,
+        contentType: object.contentType,
+        key: object.key,
+        stream: new Blob([object.body as BlobPart]).stream(),
       };
     },
     headObject,
