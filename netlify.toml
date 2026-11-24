@@ -1,0 +1,18 @@
+# Runs SignuDoc on Netlify. The app is a regular Next.js server, built by
+# Netlify's Next.js runtime. See docs/self-hosting.md, "Self-hosting
+# somewhere else", for the settings it needs.
+#
+# The database is Netlify Database (Postgres from Neon), provisioned by the
+# @netlify/database package on the first deploy. Set DATABASE_URL on the
+# site to its NETLIFY_DATABASE_URL_UNPOOLED value; until it is set the
+# build skips the migration step.
+
+[build]
+  command = "if [ -n \"$DATABASE_URL\" ]; then npm run db:migrate; fi && npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

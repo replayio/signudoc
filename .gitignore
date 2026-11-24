@@ -31,3 +31,6 @@ playwright-report/
 # Cloudflare (wrangler)
 .dev.vars
 .wrangler/
+
+# Local Netlify folder
+.netlify
