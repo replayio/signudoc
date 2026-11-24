@@ -50,7 +50,17 @@ function resolveBlobUploadSource() {
   return `${apiUrl.replace(/\/+$/, "")}/`;
 }
 
-function buildContentSecurityPolicy() {
+// A fresh nonce for every response. Next.js reads it back from the
+// Content-Security-Policy request header and stamps it on the inline
+// scripts it renders, so the policy can refuse every other inline script.
+// Web Crypto, so this runs the same under Node.js and the Edge runtime.
+function createScriptNonce() {
+  return btoa(
+    String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))),
+  );
+}
+
+function buildContentSecurityPolicy(nonce: string) {
   const preview = isVercelPreview();
   const botProtection = process.env.NEXT_PUBLIC_BOTID === "1";
   const directives: Array<[name: string, sources: Array<string | false>]> = [
@@ -105,8 +115,14 @@ function buildContentSecurityPolicy() {
     [
       "script-src",
       [
+        // Only scripts carrying this response's nonce run, and the
+        // scripts they load in turn ('strict-dynamic'). Browsers that
+        // understand 'strict-dynamic' ignore 'self', which stays for the
+        // few that do not. Inline scripts without the nonce, inline event
+        // handlers and javascript: URLs are refused.
+        `'nonce-${nonce}'`,
+        "'strict-dynamic'",
         "'self'",
-        "'unsafe-inline'",
         !isProductionEnvironment() && "'unsafe-eval'",
         preview && "https://vercel.live",
       ],
@@ -121,8 +137,12 @@ function buildContentSecurityPolicy() {
     .join("; ");
 }
 
-function applySecurityHeaders(response: NextResponse, pathname: string) {
-  response.headers.set("Content-Security-Policy", buildContentSecurityPolicy());
+function applySecurityHeaders(
+  response: NextResponse,
+  pathname: string,
+  contentSecurityPolicy: string,
+) {
+  response.headers.set("Content-Security-Policy", contentSecurityPolicy);
   response.headers.set("Permissions-Policy", DEFAULT_PERMISSIONS_POLICY);
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -215,13 +235,24 @@ async function maybeRedirectAuthenticatedAuthRoute(request: NextRequest) {
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const contentSecurityPolicy = buildContentSecurityPolicy(createScriptNonce());
   const authRedirect = await maybeRedirectAuthenticatedAuthRoute(request);
 
   if (authRedirect) {
-    return applySecurityHeaders(authRedirect, pathname);
+    return applySecurityHeaders(authRedirect, pathname, contentSecurityPolicy);
   }
 
-  return applySecurityHeaders(NextResponse.next(), pathname);
+  // The policy goes on the request as well, which is where Next.js finds
+  // the nonce it must put on the scripts it renders.
+  const requestHeaders = new Headers(request.headers);
+
+  requestHeaders.set("Content-Security-Policy", contentSecurityPolicy);
+
+  return applySecurityHeaders(
+    NextResponse.next({ request: { headers: requestHeaders } }),
+    pathname,
+    contentSecurityPolicy,
+  );
 }
 
 export const config = {
