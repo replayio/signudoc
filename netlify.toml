@@ -4,7 +4,7 @@
 #
 # The database is Netlify Database (Postgres from Neon), provisioned by the
 # @netlify/database package on the first deploy. It reaches the build and
-# the app as NETLIFY_DATABASE_URL, which db/database-url.mjs understands.
+# the app as NETLIFY_DB_URL, which db/database-url.mjs understands.
 
 [build]
   command = "npm run db:migrate && npm run build"

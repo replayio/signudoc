@@ -33,10 +33,10 @@ test("migrations prefer the direct URL that belongs to the URL in use", () => {
   );
   assert.deepEqual(
     resolveMigrationDatabaseUrl({
-      NETLIFY_DATABASE_URL: "postgres://c",
-      NETLIFY_DATABASE_URL_UNPOOLED: "postgres://c-direct",
+      NETLIFY_DB_URL: "postgres://c",
+      NETLIFY_DB_URL_UNPOOLED: "postgres://c-direct",
     }),
-    { name: "NETLIFY_DATABASE_URL_UNPOOLED", value: "postgres://c-direct" },
+    { name: "NETLIFY_DB_URL_UNPOOLED", value: "postgres://c-direct" },
   );
   assert.equal(resolveMigrationDatabaseUrl({}), null);
 });

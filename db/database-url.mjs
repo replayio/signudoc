@@ -12,13 +12,13 @@
  *   the Vercel Marketplace.
  * - POSTGRES_URL / POSTGRES_URL_NON_POOLING: set by Supabase through the
  *   Vercel Marketplace.
- * - NETLIFY_DATABASE_URL / NETLIFY_DATABASE_URL_UNPOOLED: set by Netlify
+ * - NETLIFY_DB_URL / NETLIFY_DB_URL_UNPOOLED: set by Netlify
  *   Database (Neon) on a Netlify site.
  */
 const DATABASE_URL_PAIRS = [
   ["DATABASE_URL", "DATABASE_URL_UNPOOLED"],
   ["POSTGRES_URL", "POSTGRES_URL_NON_POOLING"],
-  ["NETLIFY_DATABASE_URL", "NETLIFY_DATABASE_URL_UNPOOLED"],
+  ["NETLIFY_DB_URL", "NETLIFY_DB_URL_UNPOOLED"],
 ];
 
 export const DATABASE_URL_VARIABLES = DATABASE_URL_PAIRS.map(
