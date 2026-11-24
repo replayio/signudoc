@@ -1509,9 +1509,11 @@ function CurrentSignerField({
   }
 
   if (field.type === "date") {
+    // Filled in for the signer, never edited: it must not take clicks meant
+    // for a signature field placed under or across it.
     return (
       <div
-        className="absolute z-2 overflow-hidden rounded-[0.375rem] border border-(--border-strong) bg-white/92 text-sm text-(--fg)"
+        className="pointer-events-none absolute z-2 overflow-hidden rounded-[0.375rem] border border-(--border-strong) bg-white/92 text-sm text-(--fg)"
         data-signing-field="true"
         style={frame}
       >
