@@ -413,6 +413,18 @@ export type DraftEnvelopeDocument = {
  */
 const COPY_RECIPIENT_SIGN_ORDER_BASE = 500;
 
+/** The provider's reason for a failed send, in one trimmed sentence. */
+function describeEmailFailure(error: unknown): string {
+  const message =
+    error instanceof Error ? error.message.trim() : String(error).trim();
+
+  if (!message) {
+    return "The email service gave no reason.";
+  }
+
+  return /[.!?]$/.test(message) ? message : `${message}.`;
+}
+
 export class EnvelopeMutationError extends Error {
   readonly statusCode: number;
 
@@ -2331,7 +2343,22 @@ export async function sendDraftEnvelope(
       );
     });
 
-    throw error;
+    if (error instanceof EnvelopeMutationError) {
+      throw error;
+    }
+
+    // The envelope is a draft again. Say so, and say why the email did not
+    // go, so the sender can put it right (usually under Settings, Email)
+    // instead of being shown a failure with no cause.
+    console.error(
+      `The signing invitation for envelope ${envelopeId} could not be sent:`,
+      error,
+    );
+
+    throw new EnvelopeMutationError(
+      `The signing invitation could not be emailed, so this envelope was not sent. ${describeEmailFailure(error)}`,
+      502,
+    );
   }
 
   await recordEmailSent(
