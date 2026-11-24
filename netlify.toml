@@ -7,7 +7,7 @@
 # the app as NETLIFY_DB_URL, which db/database-url.mjs understands.
 
 [build]
-  command = "npm run db:migrate && npm run build"
+  command = "npm run db:migrate && node qa/make-fixtures.mjs --oversized-only && npm run build"
   publish = ".next"
 
 [build.environment]

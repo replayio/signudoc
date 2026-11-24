@@ -40,3 +40,6 @@ playwright-report/
 
 # Replay QA bug reports saved by the CLI
 .replay/qa-bugs/
+
+# Generated at build time by qa/make-fixtures.mjs (21 MB)
+public/qa/oversized.pdf
