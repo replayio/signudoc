@@ -435,6 +435,23 @@ export function EnvelopeDetailShell({
               </>
             ) : null}
 
+            {activeRecord.status === "sent" ||
+            activeRecord.status === "declined" ||
+            activeRecord.status === "voided" ? (
+              <ShellButton
+                onClick={() =>
+                  // A file download from an API route, not a page navigation.
+                  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+                  window.location.assign(
+                    `/api/envelopes/${encodeURIComponent(envelopeId)}/document?download=1`,
+                  )
+                }
+                variant="secondary"
+              >
+                Download document
+              </ShellButton>
+            ) : null}
+
             {activeRecord.status === "sent" ? (
               <>
                 <ShellButton
